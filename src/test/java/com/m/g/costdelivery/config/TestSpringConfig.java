@@ -5,10 +5,11 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 import com.m.g.costdelivery.controller.CostDeliveryController;
+import com.m.g.costdelivery.service.CostDeliveryService;
 
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan(basePackageClasses = { CostDeliveryController.class })
+@ComponentScan(basePackageClasses = { CostDeliveryController.class, CostDeliveryService.class })
 public class TestSpringConfig {
 
 	public TestSpringConfig() {
