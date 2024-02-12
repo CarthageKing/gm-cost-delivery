@@ -1,0 +1,9 @@
+logging:
+  level:
+    '[com.m.g.costdelivery]': ${APP_LOG_LEVEL:TRACE}
+
+
+server:
+  port: ${APP_SERVER_PORT:9091}
+
+
