@@ -1,7 +1,6 @@
 package com.m.g.costdelivery.calc_engine;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,17 +25,13 @@ import com.m.g.costdelivery.calc_engine.FhirPathReducedParser.NumberLiteralConte
 import com.m.g.costdelivery.calc_engine.FhirPathReducedParser.OrExpressionContext;
 import com.m.g.costdelivery.calc_engine.FhirPathReducedParser.ParenthesizedTermContext;
 import com.m.g.costdelivery.exception.CalculationEngineException;
+import com.m.g.costdelivery.util.AppConstants;
 import com.m.g.costdelivery.util.Util;
 
 public class CalculationEngine {
 
 	private final ParseTree expressionTree;
 	private final List<String> errors;
-
-	// use banker's rounding for internal calculations
-	// https://docs.oracle.com/javase/8/docs/api/java/math/RoundingMode.html#HALF_EVEN
-	private final RoundingMode roundingMode = RoundingMode.HALF_EVEN;
-	private final int maxScale = 4;
 
 	public CalculationEngine(String expression) {
 		CodePointCharStream charStream = CharStreams.fromString(expression);
@@ -289,7 +284,7 @@ public class CalculationEngine {
 					return left.multiply(right);
 
 				case DIVIDE:
-					return left.divide(right, maxScale, roundingMode);
+					return left.divide(right, AppConstants.MAX_BIGDECIMAL_SCALE, AppConstants.ROUNDING_MODE);
 
 				case MOD:
 					return left.remainder(right);

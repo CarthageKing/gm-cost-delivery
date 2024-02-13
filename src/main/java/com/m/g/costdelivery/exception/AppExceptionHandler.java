@@ -32,14 +32,6 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 		return ResponseEntity.status(status).body(rsp);
 	}
 
-	//	private ErrorList convertToErrorList(Set<ConstraintViolation<?>> errors) {
-	//		ErrorList errlst = new ErrorList();
-	//		for (ConstraintViolation<?> cv : errors) {
-	//			errlst.getErrorMessages().add("'" + cv.getPropertyPath() + "' " + cv.getMessage());
-	//		}
-	//		return errlst;
-	//	}
-
 	@ExceptionHandler({ Exception.class })
 	public ResponseEntity<ErrorResponse> handleGenericException(Exception e, WebRequest request) {
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;

@@ -25,13 +25,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.m.g.costdelivery.config.CommonConfig;
 import com.m.g.costdelivery.config.TestSpringConfig;
 import com.m.g.costdelivery.controller.model.CalculateCostDeliveryRequest;
 import com.m.g.costdelivery.controller.model.CalculateCostDeliveryResponse;
 import com.m.g.costdelivery.controller.model.ErrorResponse;
+import com.m.g.costdelivery.util.Util;
 
 @ContextConfiguration(classes = { TestSpringConfig.class, CommonConfig.class })
 // we define a port here so it can be accessed by the mock voucher controller
@@ -41,12 +40,6 @@ import com.m.g.costdelivery.controller.model.ErrorResponse;
 class CostDeliveryControllerTest {
 
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(CostDeliveryControllerTest.class);
-
-	private static final ObjectMapper OBJECT_MAPPER;
-
-	static {
-		OBJECT_MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
-	}
 
 	@LocalServerPort
 	private int port;
@@ -85,7 +78,7 @@ class CostDeliveryControllerTest {
 				request.setHeight(BigDecimal.ONE);
 				request.setWidth(BigDecimal.ONE);
 				request.setLength(BigDecimal.ONE);
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -98,7 +91,7 @@ class CostDeliveryControllerTest {
 				Assertions.fail("did not throw expected exception");
 			} catch (HttpClientErrorException e) {
 				Assertions.assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
-				ErrorResponse rsp = OBJECT_MAPPER.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
+				ErrorResponse rsp = Util.toObj(e.getResponseBodyAsString(), ErrorResponse.class);
 				Assertions.assertEquals(true, rsp.getError().contains("Request cannot be processed due to the rules"));
 			}
 		}
@@ -113,7 +106,7 @@ class CostDeliveryControllerTest {
 				request.setHeight(BigDecimal.ONE);
 				request.setWidth(BigDecimal.ONE);
 				request.setLength(BigDecimal.ONE);
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -123,7 +116,7 @@ class CostDeliveryControllerTest {
 			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
 			LOG.trace("the response: {}", httpRsp.getBody());
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
-			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			CalculateCostDeliveryResponse rsp = Util.toObj(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("1000"), rsp.getCost());
 		}
 
@@ -137,7 +130,7 @@ class CostDeliveryControllerTest {
 				request.setHeight(BigDecimal.ONE);
 				request.setWidth(BigDecimal.ONE);
 				request.setLength(BigDecimal.ONE);
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -147,7 +140,7 @@ class CostDeliveryControllerTest {
 			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
 			LOG.trace("the response: {}", httpRsp.getBody());
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
-			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			CalculateCostDeliveryResponse rsp = Util.toObj(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("0.03"), rsp.getCost());
 		}
 
@@ -161,7 +154,7 @@ class CostDeliveryControllerTest {
 				request.setHeight(new BigDecimal("2"));
 				request.setWidth(new BigDecimal("2"));
 				request.setLength(new BigDecimal("374.75"));
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -171,7 +164,7 @@ class CostDeliveryControllerTest {
 			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
 			LOG.trace("the response: {}", httpRsp.getBody());
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
-			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			CalculateCostDeliveryResponse rsp = Util.toObj(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("44.97"), rsp.getCost());
 		}
 
@@ -185,7 +178,7 @@ class CostDeliveryControllerTest {
 				request.setHeight(new BigDecimal("2"));
 				request.setWidth(new BigDecimal("2"));
 				request.setLength(new BigDecimal("375"));
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -195,7 +188,7 @@ class CostDeliveryControllerTest {
 			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
 			LOG.trace("the response: {}", httpRsp.getBody());
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
-			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			CalculateCostDeliveryResponse rsp = Util.toObj(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("60"), rsp.getCost());
 		}
 
@@ -209,7 +202,7 @@ class CostDeliveryControllerTest {
 				request.setHeight(new BigDecimal("2"));
 				request.setWidth(new BigDecimal("2"));
 				request.setLength(new BigDecimal("624.75"));
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -219,7 +212,7 @@ class CostDeliveryControllerTest {
 			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
 			LOG.trace("the response: {}", httpRsp.getBody());
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
-			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			CalculateCostDeliveryResponse rsp = Util.toObj(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("99.96"), rsp.getCost());
 		}
 
@@ -233,7 +226,7 @@ class CostDeliveryControllerTest {
 				request.setHeight(new BigDecimal("2"));
 				request.setWidth(new BigDecimal("2"));
 				request.setLength(new BigDecimal("625"));
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -243,7 +236,7 @@ class CostDeliveryControllerTest {
 			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
 			LOG.trace("the response: {}", httpRsp.getBody());
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
-			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			CalculateCostDeliveryResponse rsp = Util.toObj(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("125"), rsp.getCost());
 		}
 	}
@@ -260,7 +253,7 @@ class CostDeliveryControllerTest {
 				request.setHeight(new BigDecimal("2"));
 				request.setWidth(new BigDecimal("2"));
 				request.setLength(new BigDecimal("625"));
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -270,7 +263,7 @@ class CostDeliveryControllerTest {
 			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
 			LOG.trace("the response: {}", httpRsp.getBody());
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
-			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			CalculateCostDeliveryResponse rsp = Util.toObj(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("125"), rsp.getCost());
 		}
 
@@ -285,7 +278,7 @@ class CostDeliveryControllerTest {
 				request.setWidth(new BigDecimal("2"));
 				request.setLength(new BigDecimal("625"));
 				request.setVoucherCode("SENIOR");
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -295,7 +288,7 @@ class CostDeliveryControllerTest {
 			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
 			LOG.trace("the response: {}", httpRsp.getBody());
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
-			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			CalculateCostDeliveryResponse rsp = Util.toObj(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("100"), rsp.getCost());
 		}
 
@@ -310,7 +303,7 @@ class CostDeliveryControllerTest {
 				request.setWidth(new BigDecimal("2"));
 				request.setLength(new BigDecimal("625"));
 				request.setVoucherCode("COUPON");
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -320,7 +313,7 @@ class CostDeliveryControllerTest {
 			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
 			LOG.trace("the response: {}", httpRsp.getBody());
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
-			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			CalculateCostDeliveryResponse rsp = Util.toObj(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("118.75"), rsp.getCost());
 		}
 
@@ -335,7 +328,7 @@ class CostDeliveryControllerTest {
 				request.setWidth(new BigDecimal("2"));
 				request.setLength(new BigDecimal("625"));
 				request.setVoucherCode("EXPIRED");
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -348,7 +341,7 @@ class CostDeliveryControllerTest {
 				Assertions.fail("did not throw expected exception");
 			} catch (HttpClientErrorException e) {
 				Assertions.assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
-				ErrorResponse rsp = OBJECT_MAPPER.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
+				ErrorResponse rsp = Util.toObj(e.getResponseBodyAsString(), ErrorResponse.class);
 				Assertions.assertEquals(true, rsp.getError().contains("The provided voucher code is expired"));
 			}
 		}
@@ -364,7 +357,7 @@ class CostDeliveryControllerTest {
 				request.setWidth(new BigDecimal("2"));
 				request.setLength(new BigDecimal("625"));
 				request.setVoucherCode(UUID.randomUUID().toString());
-				content = OBJECT_MAPPER.writeValueAsString(request);
+				content = Util.toStr(request);
 			}
 			LOG.trace("the request: {}", content);
 			HttpHeaders hdrs = new HttpHeaders();
@@ -377,7 +370,7 @@ class CostDeliveryControllerTest {
 				Assertions.fail("did not throw expected exception");
 			} catch (HttpServerErrorException e) {
 				Assertions.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, e.getStatusCode());
-				ErrorResponse rsp = OBJECT_MAPPER.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
+				ErrorResponse rsp = Util.toObj(e.getResponseBodyAsString(), ErrorResponse.class);
 				Assertions.assertEquals(true, rsp.getError().contains("Invalid voucher code"));
 			}
 		}
