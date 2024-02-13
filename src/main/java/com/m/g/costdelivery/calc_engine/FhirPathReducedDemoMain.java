@@ -13,7 +13,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class FhirPathReducedDemoMain {
 
 	public static void main(String[] args) throws Exception {
-		String expression = "4 + 0.03";
+		String expression = "4+5";
 		CodePointCharStream charStream = CharStreams.fromString(expression);
 		FhirPathReducedLexer lexer = new FhirPathReducedLexer(charStream);
 		CommonTokenStream tokenStream = new CommonTokenStream(lexer);
