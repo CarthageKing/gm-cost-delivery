@@ -1,7 +1,6 @@
 package com.m.g.costdelivery.calc_engine;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +35,8 @@ public class CalculationEngine {
 
 	// use banker's rounding for internal calculations
 	// https://docs.oracle.com/javase/8/docs/api/java/math/RoundingMode.html#HALF_EVEN
-	private final MathContext mathCtx = new MathContext(4, RoundingMode.HALF_EVEN);
+	private final RoundingMode roundingMode = RoundingMode.HALF_EVEN;
+	private final int maxScale = 4;
 
 	public CalculationEngine(String expression) {
 		CodePointCharStream charStream = CharStreams.fromString(expression);
@@ -71,7 +71,7 @@ public class CalculationEngine {
 			this.height = height;
 			this.width = width;
 			this.length = length;
-			volume = height.multiply(width, mathCtx).multiply(length, mathCtx);
+			volume = height.multiply(width).multiply(length);
 		}
 
 		public Object doEval() {
@@ -286,13 +286,13 @@ public class CalculationEngine {
 				BigDecimal right = (BigDecimal) rhs;
 				switch (o) {
 				case MULTIPLY:
-					return left.multiply(right, mathCtx);
+					return left.multiply(right);
 
 				case DIVIDE:
-					return left.divide(right, mathCtx);
+					return left.divide(right, maxScale, roundingMode);
 
 				case MOD:
-					return left.remainder(right, mathCtx);
+					return left.remainder(right);
 
 				default:
 					// falls through
@@ -316,10 +316,10 @@ public class CalculationEngine {
 				BigDecimal right = (BigDecimal) rhs;
 				switch (o) {
 				case PLUS:
-					return left.add(right, mathCtx);
+					return left.add(right);
 
 				case MINUS:
-					return left.subtract(right, mathCtx);
+					return left.subtract(right);
 
 				default:
 					// falls through

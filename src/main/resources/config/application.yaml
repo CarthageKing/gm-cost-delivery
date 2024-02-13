@@ -7,3 +7,6 @@ server:
   port: ${APP_SERVER_PORT:9091}
 
 
+app:
+  extapi:
+    get_voucher_api_url: ${APP_GET_VOUCHER_API:MOCK}

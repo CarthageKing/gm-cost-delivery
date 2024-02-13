@@ -1,6 +1,7 @@
 package com.m.g.costdelivery.controller;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import javax.annotation.Resource;
 
@@ -21,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,7 +34,10 @@ import com.m.g.costdelivery.controller.model.CalculateCostDeliveryResponse;
 import com.m.g.costdelivery.controller.model.ErrorResponse;
 
 @ContextConfiguration(classes = { TestSpringConfig.class, CommonConfig.class })
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+// we define a port here so it can be accessed by the mock voucher controller
+@SpringBootTest(webEnvironment = WebEnvironment.DEFINED_PORT, properties = {
+	"server.port=65123",
+})
 class CostDeliveryControllerTest {
 
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(CostDeliveryControllerTest.class);
@@ -240,6 +245,141 @@ class CostDeliveryControllerTest {
 			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
 			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
 			Assertions.assertEquals(new BigDecimal("125"), rsp.getCost());
+		}
+	}
+
+	@Test
+	void test_defaultRules_withVoucher() throws Exception {
+		// no voucher
+		{
+			String requestUriStr = baseUrl + "/cost_delivery/_calculate";
+			String content = null;
+			{
+				CalculateCostDeliveryRequest request = new CalculateCostDeliveryRequest();
+				request.setWeight(new BigDecimal("10"));
+				request.setHeight(new BigDecimal("2"));
+				request.setWidth(new BigDecimal("2"));
+				request.setLength(new BigDecimal("625"));
+				content = OBJECT_MAPPER.writeValueAsString(request);
+			}
+			LOG.trace("the request: {}", content);
+			HttpHeaders hdrs = new HttpHeaders();
+			hdrs.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+			hdrs.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+			HttpEntity<String> httpReq = new HttpEntity<String>(content, hdrs);
+			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
+			LOG.trace("the response: {}", httpRsp.getBody());
+			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
+			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			Assertions.assertEquals(new BigDecimal("125"), rsp.getCost());
+		}
+
+		// SENIOR voucher
+		{
+			String requestUriStr = baseUrl + "/cost_delivery/_calculate";
+			String content = null;
+			{
+				CalculateCostDeliveryRequest request = new CalculateCostDeliveryRequest();
+				request.setWeight(new BigDecimal("10"));
+				request.setHeight(new BigDecimal("2"));
+				request.setWidth(new BigDecimal("2"));
+				request.setLength(new BigDecimal("625"));
+				request.setVoucherCode("SENIOR");
+				content = OBJECT_MAPPER.writeValueAsString(request);
+			}
+			LOG.trace("the request: {}", content);
+			HttpHeaders hdrs = new HttpHeaders();
+			hdrs.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+			hdrs.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+			HttpEntity<String> httpReq = new HttpEntity<String>(content, hdrs);
+			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
+			LOG.trace("the response: {}", httpRsp.getBody());
+			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
+			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			Assertions.assertEquals(new BigDecimal("100"), rsp.getCost());
+		}
+
+		// COUPON voucher
+		{
+			String requestUriStr = baseUrl + "/cost_delivery/_calculate";
+			String content = null;
+			{
+				CalculateCostDeliveryRequest request = new CalculateCostDeliveryRequest();
+				request.setWeight(new BigDecimal("10"));
+				request.setHeight(new BigDecimal("2"));
+				request.setWidth(new BigDecimal("2"));
+				request.setLength(new BigDecimal("625"));
+				request.setVoucherCode("COUPON");
+				content = OBJECT_MAPPER.writeValueAsString(request);
+			}
+			LOG.trace("the request: {}", content);
+			HttpHeaders hdrs = new HttpHeaders();
+			hdrs.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+			hdrs.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+			HttpEntity<String> httpReq = new HttpEntity<String>(content, hdrs);
+			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
+			LOG.trace("the response: {}", httpRsp.getBody());
+			Assertions.assertEquals(HttpStatus.OK, httpRsp.getStatusCode());
+			CalculateCostDeliveryResponse rsp = OBJECT_MAPPER.readValue(httpRsp.getBody(), CalculateCostDeliveryResponse.class);
+			Assertions.assertEquals(new BigDecimal("118.75"), rsp.getCost());
+		}
+
+		// EXPIRED voucher
+		{
+			String requestUriStr = baseUrl + "/cost_delivery/_calculate";
+			String content = null;
+			{
+				CalculateCostDeliveryRequest request = new CalculateCostDeliveryRequest();
+				request.setWeight(new BigDecimal("10"));
+				request.setHeight(new BigDecimal("2"));
+				request.setWidth(new BigDecimal("2"));
+				request.setLength(new BigDecimal("625"));
+				request.setVoucherCode("EXPIRED");
+				content = OBJECT_MAPPER.writeValueAsString(request);
+			}
+			LOG.trace("the request: {}", content);
+			HttpHeaders hdrs = new HttpHeaders();
+			hdrs.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+			hdrs.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+			HttpEntity<String> httpReq = new HttpEntity<String>(content, hdrs);
+			try {
+				ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
+				LOG.trace("the response: {}", httpRsp.getBody());
+				Assertions.fail("did not throw expected exception");
+			} catch (HttpClientErrorException e) {
+				Assertions.assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
+				ErrorResponse rsp = OBJECT_MAPPER.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
+				Assertions.assertEquals(true, rsp.getError().contains("The provided voucher code is expired"));
+			}
+		}
+
+		// invalid voucher
+		{
+			String requestUriStr = baseUrl + "/cost_delivery/_calculate";
+			String content = null;
+			{
+				CalculateCostDeliveryRequest request = new CalculateCostDeliveryRequest();
+				request.setWeight(new BigDecimal("10"));
+				request.setHeight(new BigDecimal("2"));
+				request.setWidth(new BigDecimal("2"));
+				request.setLength(new BigDecimal("625"));
+				request.setVoucherCode(UUID.randomUUID().toString());
+				content = OBJECT_MAPPER.writeValueAsString(request);
+			}
+			LOG.trace("the request: {}", content);
+			HttpHeaders hdrs = new HttpHeaders();
+			hdrs.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+			hdrs.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+			HttpEntity<String> httpReq = new HttpEntity<String>(content, hdrs);
+			try {
+				ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
+				LOG.trace("the response: {}", httpRsp.getBody());
+				Assertions.fail("did not throw expected exception");
+			} catch (HttpServerErrorException e) {
+				Assertions.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, e.getStatusCode());
+				ErrorResponse rsp = OBJECT_MAPPER.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
+				Assertions.assertEquals(true, rsp.getError().contains("Invalid voucher code"));
+			}
 		}
 	}
 }

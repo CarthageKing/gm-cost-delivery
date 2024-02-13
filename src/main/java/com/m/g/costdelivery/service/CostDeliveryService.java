@@ -1,6 +1,7 @@
 package com.m.g.costdelivery.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -14,15 +15,20 @@ import com.m.g.costdelivery.calc_engine.dao.CostDeliveryRuleDao;
 import com.m.g.costdelivery.calc_engine.dao.CostDeliveryRuleEntity;
 import com.m.g.costdelivery.controller.model.CalculateCostDeliveryRequest;
 import com.m.g.costdelivery.controller.model.CalculateCostDeliveryResponse;
+import com.m.g.costdelivery.controller.model.VoucherItem;
 import com.m.g.costdelivery.exception.BadRequestException;
 import com.m.g.costdelivery.exception.CostDeliveryException;
 import com.m.g.costdelivery.util.AppConstants;
+import com.m.g.costdelivery.util.Util;
 
 @Service
 public class CostDeliveryService {
 
 	@Resource
 	private CostDeliveryRuleDao cdRuleDao;
+
+	@Resource
+	private VoucherApi voucherApi;
 
 	public CostDeliveryService() {
 		// noop
@@ -61,7 +67,18 @@ public class CostDeliveryService {
 
 					String voucherCode = StringUtils.trimToEmpty(request.getVoucherCode());
 					if (voucherCode.length() > 0) {
-						throw new UnsupportedOperationException();
+						VoucherItem vi = voucherApi.getVoucherDetails(voucherCode);
+						if (null != vi.getExpiry()) {
+							if (LocalDate.now().compareTo(vi.getExpiry()) <= 0) {
+								// voucher still valid
+								BigDecimal discountPct = vi.getDiscount();
+								BigDecimal discount = result.multiply(discountPct);
+								result = Util.stripTrailingZerosAfterDecimalPoint(result.subtract(discount));
+							} else {
+								// expired voucher
+								throw new BadRequestException("The provided voucher code is expired");
+							}
+						}
 					}
 
 					CalculateCostDeliveryResponse response = new CalculateCostDeliveryResponse();
