@@ -1,19 +1,78 @@
 package com.m.g.costdelivery.service;
 
-import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.util.List;
 
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.m.g.costdelivery.calc_engine.CalculationEngine;
+import com.m.g.costdelivery.calc_engine.dao.CostDeliveryRuleDao;
+import com.m.g.costdelivery.calc_engine.dao.CostDeliveryRuleEntity;
 import com.m.g.costdelivery.controller.model.CalculateCostDeliveryRequest;
 import com.m.g.costdelivery.controller.model.CalculateCostDeliveryResponse;
+import com.m.g.costdelivery.exception.BadRequestException;
+import com.m.g.costdelivery.exception.CostDeliveryException;
+import com.m.g.costdelivery.util.AppConstants;
 
 @Service
 public class CostDeliveryService {
+
+	@Resource
+	private CostDeliveryRuleDao cdRuleDao;
 
 	public CostDeliveryService() {
 		// noop
 	}
 
-	public CalculateCostDeliveryResponse calculateCost(CalculateCostDeliveryRequest calcCostDeliveryRequest) {
-		// TODO Auto-generated method stub
-		return null;
+	public CalculateCostDeliveryResponse calculateCost(CalculateCostDeliveryRequest request) {
+		List<CostDeliveryRuleEntity> rules = cdRuleDao.findAllOrderByPriority();
+		if (CollectionUtils.isEmpty(rules)) {
+			throw new CostDeliveryException("No rules are configured! Please configure rules first");
+		}
+		for (CostDeliveryRuleEntity rule : rules) {
+			String cond = StringUtils.trimToEmpty(rule.getCondition());
+			boolean doEvalCost = false;
+			if (cond.length() < 1) {
+				doEvalCost = true;
+			} else {
+				String expr = cond.substring(AppConstants.RULE_MARKER_EXPR.length());
+				CalculationEngine ce = new CalculationEngine(expr);
+				doEvalCost = (boolean) ce.evaluate(request.getWeight(), request.getHeight(), request.getWidth(), request.getLength());
+			}
+
+			if (doEvalCost) {
+				String cost = StringUtils.trimToEmpty(rule.getCost());
+				if (cost.startsWith(AppConstants.RULE_MARKER_ERR)) {
+					String val = cost.substring(AppConstants.RULE_MARKER_ERR.length());
+					if (AppConstants.RULE_ERR_REJECT.equals(val)) {
+						throw new BadRequestException("Request cannot be processed due to the rules. Please review the rules");
+					} else {
+						// shouldn't happen
+						throw new IllegalStateException("Malformed cost expression: " + cost);
+					}
+				} else if (cost.startsWith(AppConstants.RULE_MARKER_EXPR)) {
+					String expr = cost.substring(AppConstants.RULE_MARKER_EXPR.length());
+					CalculationEngine ce = new CalculationEngine(expr);
+					BigDecimal result = (BigDecimal) ce.evaluate(request.getWeight(), request.getHeight(), request.getWidth(), request.getLength());
+
+					String voucherCode = StringUtils.trimToEmpty(request.getVoucherCode());
+					if (voucherCode.length() > 0) {
+						throw new UnsupportedOperationException();
+					}
+
+					CalculateCostDeliveryResponse response = new CalculateCostDeliveryResponse();
+					response.setCost(result);
+					return response;
+				} else {
+					// shouldn't happen
+					throw new IllegalStateException("Malformed cost expression: " + cost);
+				}
+			}
+		}
+		throw new CostDeliveryException("Request cannot be processed since it matched no rules. Please review the rules");
 	}
 }

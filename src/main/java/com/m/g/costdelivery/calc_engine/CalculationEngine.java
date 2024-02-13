@@ -27,6 +27,7 @@ import com.m.g.costdelivery.calc_engine.FhirPathReducedParser.NumberLiteralConte
 import com.m.g.costdelivery.calc_engine.FhirPathReducedParser.OrExpressionContext;
 import com.m.g.costdelivery.calc_engine.FhirPathReducedParser.ParenthesizedTermContext;
 import com.m.g.costdelivery.exception.CalculationEngineException;
+import com.m.g.costdelivery.util.Util;
 
 public class CalculationEngine {
 
@@ -78,7 +79,8 @@ public class CalculationEngine {
 			if (result instanceof Boolean) {
 				return result;
 			} else if (result instanceof BigDecimal) {
-				return result;
+				BigDecimal r = (BigDecimal) result;
+				return Util.stripTrailingZerosAfterDecimalPoint(r);
 			}
 			throw new CalculationEngineException("Invalid expression");
 		}
