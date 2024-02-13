@@ -2,6 +2,7 @@ package com.m.g.costdelivery.controller;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import javax.annotation.Resource;
 
@@ -373,6 +374,53 @@ class CostDeliveryControllerTest {
 				ErrorResponse rsp = Util.toObj(e.getResponseBodyAsString(), ErrorResponse.class);
 				Assertions.assertEquals(true, rsp.getError().contains("Invalid voucher code"));
 			}
+		}
+	}
+
+	@Test
+	void test_defaultRules_paramValidation() throws Exception {
+		doCalculateCostParamValidation(r -> r.setWeight(null), "'weight' must not be null");
+		doCalculateCostParamValidation(r -> r.setWeight(new BigDecimal("-1")), "'weight' must be greater than zero");
+		doCalculateCostParamValidation(r -> r.setWeight(BigDecimal.ZERO), "'weight' must be greater than zero");
+
+		doCalculateCostParamValidation(r -> r.setHeight(null), "'height' must not be null");
+		doCalculateCostParamValidation(r -> r.setHeight(new BigDecimal("-1")), "'height' must be greater than zero");
+		doCalculateCostParamValidation(r -> r.setHeight(BigDecimal.ZERO), "'height' must be greater than zero");
+
+		doCalculateCostParamValidation(r -> r.setWidth(null), "'width' must not be null");
+		doCalculateCostParamValidation(r -> r.setWidth(new BigDecimal("-1")), "'width' must be greater than zero");
+		doCalculateCostParamValidation(r -> r.setWidth(BigDecimal.ZERO), "'width' must be greater than zero");
+
+		doCalculateCostParamValidation(r -> r.setLength(null), "'length' must not be null");
+		doCalculateCostParamValidation(r -> r.setLength(new BigDecimal("-1")), "'length' must be greater than zero");
+		doCalculateCostParamValidation(r -> r.setLength(BigDecimal.ZERO), "'length' must be greater than zero");
+	}
+
+	private void doCalculateCostParamValidation(Consumer<CalculateCostDeliveryRequest> consumer, String expectedMsg) throws Exception {
+		String requestUriStr = baseUrl + "/cost_delivery/_calculate";
+		String content = null;
+		{
+			CalculateCostDeliveryRequest request = new CalculateCostDeliveryRequest();
+			request.setWeight(new BigDecimal("50.1"));
+			request.setHeight(BigDecimal.ONE);
+			request.setWidth(BigDecimal.ONE);
+			request.setLength(BigDecimal.ONE);
+			consumer.accept(request);
+			content = Util.toStr(request);
+		}
+		LOG.trace("the request: {}", content);
+		HttpHeaders hdrs = new HttpHeaders();
+		hdrs.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+		hdrs.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+		HttpEntity<String> httpReq = new HttpEntity<String>(content, hdrs);
+		try {
+			ResponseEntity<String> httpRsp = restTemplate.exchange(requestUriStr, HttpMethod.POST, httpReq, String.class);
+			LOG.trace("the response: {}", httpRsp.getBody());
+			Assertions.fail("did not throw expected exception");
+		} catch (HttpClientErrorException e) {
+			Assertions.assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
+			ErrorResponse rsp = Util.toObj(e.getResponseBodyAsString(), ErrorResponse.class);
+			Assertions.assertEquals(true, rsp.getError().contains(expectedMsg));
 		}
 	}
 }

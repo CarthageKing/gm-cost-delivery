@@ -35,6 +35,10 @@ public class CostDeliveryService {
 	}
 
 	public CalculateCostDeliveryResponse calculateCost(CalculateCostDeliveryRequest request) {
+		validateNotNullNotZeroPositiveValue(request.getWeight(), "weight");
+		validateNotNullNotZeroPositiveValue(request.getHeight(), "height");
+		validateNotNullNotZeroPositiveValue(request.getWidth(), "width");
+		validateNotNullNotZeroPositiveValue(request.getLength(), "length");
 		List<CostDeliveryRuleEntity> rules = cdRuleDao.findAllOrderByPriority();
 		if (CollectionUtils.isEmpty(rules)) {
 			throw new CostDeliveryException("No rules are configured! Please configure rules first");
@@ -91,5 +95,14 @@ public class CostDeliveryService {
 			}
 		}
 		throw new CostDeliveryException("Request cannot be processed since it matched no rules. Please review the rules");
+	}
+
+	private void validateNotNullNotZeroPositiveValue(BigDecimal val, String varName) {
+		if (null == val) {
+			throw new BadRequestException("'" + varName + "' must not be null");
+		}
+		if (val.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new BadRequestException("'" + varName + "' must be greater than zero");
+		}
 	}
 }
